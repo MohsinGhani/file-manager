@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* .ant-layout-sider-children {
+  width: 80% !important;
+} */
+
+.ant-layout-sider {
+  min-width: 100% !important;
+}
+
+.ant-progress-inner {
+  height: 15px !important;
+}
+
+.ant-progress-success-bg {
+  height: 15px !important;
+}
+.ant-progress-bg {
+  height: 15px !important;
+}

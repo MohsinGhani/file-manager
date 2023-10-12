@@ -20,8 +20,8 @@ const Page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [number, setNumber] = useState("");
-  const router = useRouter() // Updated import
-const {setUpRecaptcha} = useAuthContext()
+  const router = useRouter(); // Updated import
+  const { setUpRecaptcha } = useAuthContext();
 
   const onFinish = async (values: any) => {
     console.log("🚀 ~ values:", values);
@@ -40,65 +40,62 @@ const {setUpRecaptcha} = useAuthContext()
       setError("Passwords do not match!");
       return;
     }
-   
-     
-      if (number === "" || number === undefined)
-        return setError("Enter number");
-      try {
-        const resonsne = await setUpRecaptcha(number);
-        console.log(resonsne);
-      } catch (err) {
-        console.log(err);
-      }
-    
-    // try {
-    //   setLoading(true);
 
-    //   // const authUser = await createUserWithEmailAndPassword(
-    //   //   auth,
-    //   //   email,
-    //   //   password
-    //   // );
+    if (number === "" || number === undefined) return setError("Enter number");
+    try {
+      const resonsne = await setUpRecaptcha(number);
+      console.log(resonsne);
+    } catch (err) {
+      console.log(err);
+    }
 
-    //   const firstName = values.firstName;
+    try {
+      setLoading(true);
 
-    //   await updateProfile(authUser.user, { displayName: firstName });
-    //   await sendEmailVerification(authUser.user);
+      const authUser = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-    //   const uid = authUser.user.uid;
-    //   await setDoc(doc(db, "Users", uid), {
-    //     firstName,
-    //     lastName,
-    //     email,
+      const firstName = values.firstName;
 
-    //     phone: phoneNumber,
-    //   });
+      await updateProfile(authUser.user, { displayName: firstName });
+      await sendEmailVerification(authUser.user);
 
-    //   setLoading(false);
-    //   getOtp(number);
-    //   Modal.success({
-    //     title: "Sign up successful!",
-    //     content: "Please check your email and verify your account.",
-    //     okText: "Close",
-    //     closeIcon: <CloseOutlined />,
-    //     onOk: () => {
-    //       router.push("/sign-in");
-    //     },
-    //     className: "custom-success-modal",
-    //   });
-    // } catch (err) {
-    //   console.error("Error:", err);
-    //   setLoading(false);
-    //   setError("An error occurred during sign up.");
-    // }
-    
+      const uid = authUser.user.uid;
+      await setDoc(doc(db, "Users", uid), {
+        firstName,
+        lastName,
+        email,
+
+        phone: phoneNumber,
+      });
+
+      setLoading(false);
+
+      Modal.success({
+        title: "Sign up successful!",
+        content: "Please check your email and verify your account.",
+        okText: "Close",
+        closeIcon: <CloseOutlined />,
+        onOk: () => {
+          router.push("/sign-in");
+        },
+        className: "custom-success-modal",
+      });
+    } catch (err) {
+      console.error("Error:", err);
+      setLoading(false);
+      setError("An error occurred during sign up.");
+    }
   };
 
   const onFinishFailed = (errorInfo: any) => {
     console.error("Validation failed:", errorInfo);
   };
   return (
-    <div className="w-full bg relative h-[85vh] pl-[10px] pr-[10px] bg-[#000]">
+    <div className="w-full bg relative h-[85vh] pl-[10px] pr-[10px] bg-[#fff]">
       <div className="mx-auto max-w-[460px] mt-[50px] items-center flex flex-col">
         <h1 className="font-[600] text-[30px] font-poppins text-[#000] mb-[-30px]">
           Signup to thread
@@ -109,16 +106,16 @@ const {setUpRecaptcha} = useAuthContext()
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
           initialValues={{
-            // firstName: "",
-            // lastName: "",
-            // email: "",
+            firstName: "",
+            lastName: "",
+            email: "",
             phoneNumber: "",
-            // password: "",
-            // confirmPassword: "",
+            password: "",
+            confirmPassword: "",
           }}
         >
           <div className="max-w-[1280px] justify-between gap-[10px] w-full flex max-sm:flex-col mb-[20px]">
-          {/* <Form.Item
+            <Form.Item
               name="firstName"
               rules={[
                 { required: true, message: "Please enter your first name." },
@@ -142,43 +139,46 @@ const {setUpRecaptcha} = useAuthContext()
                 maxLength={16}
               />
             </Form.Item>
-        
+          </div>
           <Form.Item
             name="email"
             rules={[
               { required: true, message: "Please enter your email address." },
-              { type: "email", message: "Please enter a valid email address." },
+              {
+                type: "email",
+                message: "Please enter a valid email address.",
+              },
             ]}
           >
             <Input
               className="font-[500] text-[14px]  rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] "
               placeholder="Email"
             />
-          </Form.Item> */}
-            </div>
-
+          </Form.Item>
           <Form.Item
             name="phoneNumber"
             rules={[
               { required: true, message: "Please enter your phone number" },
             ]}
           >
-            <PhoneInput
-              country={"pak"}
-              value={number}
-              onChange={setNumber}
-              placeholder="Enter phone number"
-            />
+            <div className="font-[500] text-[14px] border  rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] ">
+              <PhoneInput
+                country={"pak"}
+                value={number}
+                onChange={setNumber}
+                placeholder="Enter phone number"
+              />
+            </div>
           </Form.Item>
 
-          {/* <Form.Item
+          <Form.Item
             name="password"
             rules={[
               { required: true, message: "Please enter a password" },
               { min: 6, message: "Password must be at least 6 characters" },
             ]}
           >
-             <Input.Password
+            <Input.Password
               className="font-[500] text-[14px]  rounded-[10px] font-poppins text-[#8591A3] h-[60px]  mb-[20px] "
               placeholder="Password"
               maxLength={16}
@@ -199,12 +199,12 @@ const {setUpRecaptcha} = useAuthContext()
               }),
             ]}
           >
-           <Input.Password
+            <Input.Password
               className="font-[500] text-[14px]  rounded-[10px] font-poppins text-[#8591A3] h-[60px]  mb-[20px] "
               placeholder="Confirm Password"
               maxLength={16}
             />
-          </Form.Item> */}
+          </Form.Item>
 
           {/* ... Terms and conditions ... */}
           <Form.Item>

@@ -61,7 +61,7 @@ const Page = () => {
             setLoading(false);
           });
       })
-      .catch((err:any) => {
+      .catch((err: any) => {
         console.log("Validation failed:", err);
         setLoading(false);
       });
