@@ -1,10 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Button, Progress, Tooltip } from "antd";
+import { Button, Form, Modal, Progress, Tooltip, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { PlusCircleOutlined, HomeFilled } from "@ant-design/icons";
 import { Divider, Radio, Table } from "antd";
+import dayjs from "dayjs";
+import moment from "moment";
 import {
   SearchOutlined,
   UserOutlined,
@@ -17,6 +19,10 @@ import {
 import { Layout } from "antd";
 const { Sider } = Layout;
 import { Input, Menu } from "antd";
+import { addDoc, collection, doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../../firebase";
+import { useParams, useRouter } from "next/navigation";
+import { useAuthContext } from "../layout";
 interface DataType {
   key: React.Key;
   name: string;
@@ -62,35 +68,35 @@ const data: DataType[] = [
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "2",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "3",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "4",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "5",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "6",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
@@ -98,7 +104,86 @@ const data: DataType[] = [
   },
 ];
 const Page = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const { user }: { user: any } = useAuthContext();
+  const [eventData, setEventData] = useState<any>(null);
+  const [folderName, setFolderName] = useState<any>(null);
+  const [getEventLoading, setEventLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const params: any = useParams();
+  const [form] = Form.useForm();
+  const uid = user?.uid;
+  const { folderId } = params;
+  const router = useRouter();
+  const isEditMode = folderId && folderId !== "create";
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const eventDocRef = doc(db, "folder", `${folderId}`);
+        const eventDoc = await getDoc(eventDocRef);
+        if (eventDoc.exists()) {
+          const eventData: any = eventDoc.data();
+
+          setEventData({
+            foldername: eventData.foldername,
+            folderImage: eventData.folderImage,
+          });
+        } else {
+          message.error("Event not found");
+        }
+        setEventLoading(false);
+      } catch (error) {
+        setEventLoading(false);
+
+        console.error("Error fetching event data:", error);
+      }
+    };
+    console.log("folderId:", folderId);
+
+    if (isEditMode) {
+      fetchEventData();
+    } else {
+      setEventLoading(false);
+    }
+  }, [folderId]);
+  const handleEvent = async () => {
+    try {
+      await form.validateFields();
+      setLoading(true);
+
+      const { foldername } = form.getFieldsValue();
+      setFolderName(foldername);
+      if (isEditMode) {
+        if ((eventData?.foldername === eventData?.folderImage) !== uid)
+          return message.warning(
+            `You don't have permission to edit this event`
+          );
+      } else {
+        const eventData = {
+          foldername: foldername,
+          folderImage: "/images/cloud-data.png",
+        };
+        const colref = collection(db, "BTB_Events");
+        await addDoc(colref, eventData);
+        message.success(`folder created successfully`);
+      }
+      console.log("SuccessSDFWEGWE:", eventData);
+      console.log("folderId:", folderId);
+    } catch (error: any) {
+      console.error("Error:", error);
+      message.error(error?.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -126,10 +211,51 @@ const Page = () => {
                 <PlusCircleOutlined className="text-[18px]" />
               </Button>
 
-              <Button className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#539ecf]">
+              <Button
+                className="text-center text-[#fff] flex items-center h-[50px] text-[14px] bg-[#539ecf]"
+                onClick={showModal}
+              >
                 Create Folder
                 <PlusCircleOutlined className="text-[18px]" />
               </Button>
+              <Modal
+                title="Basic Modal"
+                open={isModalOpen}
+                onCancel={handleCancel}
+                okButtonProps={{ style: { display: "none" } }}
+                footer={[
+                  <Button key="cancelButton" onClick={handleCancel}>
+                    Cancel
+                  </Button>,
+                  <Button key="customButton">add</Button>,
+                ]}
+              >
+                <Form
+                  form={form}
+                  onFinish={handleEvent}
+                  className="w-full"
+                  initialValues={isEditMode ? eventData : { foldername: "" }}
+                >
+                  <Form.Item
+                    name="foldername"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter a time",
+                      },
+                    ]}
+                  >
+                    <Input placeholder="Enter folder name" />
+                  </Form.Item>
+                  <Button
+                    loading={loading}
+                    htmlType="submit"
+                    className="rounded-[10px] bg-[#165188] max-w-[370px] w-full h-[50px] login text-white text-[18px] font-[500] font-poppins"
+                  >
+                    Save
+                  </Button>
+                </Form>
+              </Modal>
               <br></br>
               <br></br>
               <Button className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#0d6eaf]">
@@ -177,41 +303,14 @@ const Page = () => {
               <h1 className="text-[#0e5fcadd] font-sans">view all</h1>
             </div>
             <div className="flex  flex-wrap gap-[10px] ">
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
+              <div className="border border-1px p-[30px] rounded-[8px] text-center cursor-pointer">
                 <Image
                   src="/images/file_explorer (2).webp"
                   width={100}
                   height={100}
                   alt=""
                 />
-                <h1>react</h1>
-              </div>
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                Youtube
-              </div>
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                Angular
-              </div>
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                Projects
+                <h1>{folderName}</h1>
               </div>
             </div>
           </div>

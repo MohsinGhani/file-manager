@@ -13,14 +13,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Form, Input } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { doc, setDoc } from "firebase/firestore";
-import PhoneInput from "react-phone-input-2";
+
 import { useAuthContext } from "../layout";
 
 const Page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [number, setNumber] = useState("");
-  const router = useRouter(); // Updated import
+  const router = useRouter();
   const { setUpRecaptcha } = useAuthContext();
 
   const onFinish = async (values: any) => {
@@ -30,7 +30,7 @@ const Page = () => {
       firstName,
       lastName,
       email,
-
+      role,
       phoneNumber,
       password,
       confirmPassword,
@@ -41,14 +41,6 @@ const Page = () => {
       return;
     }
 
-    if (number === "" || number === undefined) return setError("Enter number");
-    try {
-      const resonsne = await setUpRecaptcha(number);
-      console.log(resonsne);
-    } catch (err) {
-      console.log(err);
-    }
-
     try {
       setLoading(true);
 
@@ -57,7 +49,7 @@ const Page = () => {
         email,
         password
       );
-
+      console.log(authUser, "authUser");
       const firstName = values.firstName;
 
       await updateProfile(authUser.user, { displayName: firstName });
@@ -80,7 +72,7 @@ const Page = () => {
         okText: "Close",
         closeIcon: <CloseOutlined />,
         onOk: () => {
-          router.push("/sign-in");
+          router.push("/");
         },
         className: "custom-success-modal",
       });
@@ -98,7 +90,7 @@ const Page = () => {
     <div className="w-full bg relative h-[85vh] pl-[10px] pr-[10px] bg-[#fff]">
       <div className="mx-auto max-w-[460px] mt-[50px] items-center flex flex-col">
         <h1 className="font-[600] text-[30px] font-poppins text-[#000] mb-[-30px]">
-          Signup to thread
+          Signup
         </h1>
         <p className="font-[500] text-[14px] font-poppins text-[#8591A3] mb-[45px]"></p>
         <Form
@@ -158,17 +150,14 @@ const Page = () => {
           <Form.Item
             name="phoneNumber"
             rules={[
-              { required: true, message: "Please enter your phone number" },
+              { required: true, message: "Please enter your phone number." },
             ]}
           >
-            <div className="font-[500] text-[14px] border  rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] ">
-              <PhoneInput
-                country={"pak"}
-                value={number}
-                onChange={setNumber}
-                placeholder="Enter phone number"
-              />
-            </div>
+            <Input
+              type="number"
+              className="font-[500] text-[14px]  rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] "
+              placeholder="Phone Number"
+            />
           </Form.Item>
 
           <Form.Item
