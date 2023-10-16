@@ -2,15 +2,12 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button, Form, Modal, Progress, Tooltip, message } from "antd";
-import type { ColumnsType } from "antd/es/table";
+
 import { PlusCircleOutlined, HomeFilled } from "@ant-design/icons";
-import { Divider, Radio, Table } from "antd";
-import dayjs from "dayjs";
-import moment from "moment";
+import { Table } from "antd";
+
 import {
   SearchOutlined,
-  UserOutlined,
-  VideoCameraOutlined,
   DeleteOutlined,
   FileOutlined,
   StarOutlined,
@@ -19,7 +16,15 @@ import {
 import { Layout } from "antd";
 const { Sider } = Layout;
 import { Input, Menu } from "antd";
-import { addDoc, collection, doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../../firebase";
 import { useParams, useRouter } from "next/navigation";
 import { useAuthContext } from "../layout";
@@ -105,18 +110,18 @@ const data: DataType[] = [
 ];
 const Page = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+
   const { user }: { user: any } = useAuthContext();
   const [eventData, setEventData] = useState<any>(null);
-  const [folderName, setFolderName] = useState<any>(null);
-  const [getEventLoading, setEventLoading] = useState(true);
+  const [folderIds, setFolderId] = useState<any>(null);
+
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
   const [form] = Form.useForm();
   const uid = user?.uid;
   const { folderId } = params;
   const router = useRouter();
-  const isEditMode = folderId && folderId !== "create";
+  const isEditMode = folderId && folderId !== uid;
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -124,59 +129,32 @@ const Page = () => {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
-  useEffect(() => {
-    const fetchEventData = async () => {
-      try {
-        const eventDocRef = doc(db, "folder", `${folderId}`);
-        const eventDoc = await getDoc(eventDocRef);
-        if (eventDoc.exists()) {
-          const eventData: any = eventDoc.data();
-
-          setEventData({
-            foldername: eventData.foldername,
-            folderImage: eventData.folderImage,
-          });
-        } else {
-          message.error("Event not found");
-        }
-        setEventLoading(false);
-      } catch (error) {
-        setEventLoading(false);
-
-        console.error("Error fetching event data:", error);
-      }
-    };
-    console.log("folderId:", folderId);
-
-    if (isEditMode) {
-      fetchEventData();
-    } else {
-      setEventLoading(false);
-    }
-  }, [folderId]);
   const handleEvent = async () => {
     try {
       await form.validateFields();
       setLoading(true);
-
       const { foldername } = form.getFieldsValue();
-      setFolderName(foldername);
+
       if (isEditMode) {
-        if ((eventData?.foldername === eventData?.folderImage) !== uid)
-          return message.warning(
-            `You don't have permission to edit this event`
-          );
+        if (eventData && eventData.folderId) {
+          const docRef = doc(db, "BTB_Events", eventData.folderId);
+          await updateDoc(docRef, {
+            foldername: foldername,
+          });
+          message.success(`Folder updated successfully`);
+        } else {
+          message.error(`Folder data is incomplete for editing`);
+        }
       } else {
         const eventData = {
           foldername: foldername,
           folderImage: "/images/cloud-data.png",
         };
         const colref = collection(db, "BTB_Events");
-        await addDoc(colref, eventData);
-        message.success(`folder created successfully`);
+        const docRef = await addDoc(colref, eventData);
+        message.success(`Folder created successfully`);
+        setEventData({ folderId: docRef.id, ...eventData });
       }
-      console.log("SuccessSDFWEGWE:", eventData);
-      console.log("folderId:", folderId);
     } catch (error: any) {
       console.error("Error:", error);
       message.error(error?.message);
@@ -185,11 +163,47 @@ const Page = () => {
     }
   };
 
+  const handleDelete = async (folder: any) => {
+    try {
+      const docRef = doc(db, "BTB_Events", folder.folderId);
+      await deleteDoc(docRef);
+      message.success(`Folder "${folder.foldername}" deleted successfully`);
+
+      setFolderId((prevFolderIds: any) =>
+        prevFolderIds.filter((f: any) => f.id !== folder.folderId)
+      );
+    } catch (error: any) {
+      console.error("Error:", error);
+      message.error(`Error deleting folder: ${error?.message}`);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const q = query(collection(db, "BTB_Events"));
+        const querySnapshot = await getDocs(q);
+        const folderData: any = [];
+
+        querySnapshot.forEach((doc) => {
+          const docData = doc.data();
+          folderData.push({ folderId: doc.id, ...docData });
+        });
+
+        setFolderId(folderData);
+      } catch (error: any) {
+        console.error("Error fetching data:", error);
+        message.error(error?.message);
+      }
+    };
+
+    fetchData();
+  }, [folderId]);
   return (
     <>
       <div className="flex   bg-[#c4c4c4] ">
         <Layout className="min-h-[100vh] ">
-          <Sider className="!bg-[#faf9f9] " collapsed={collapsed}>
+          <Sider className="!bg-[#faf9f9] ">
             {" "}
             <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center">
               <Image
@@ -241,7 +255,7 @@ const Page = () => {
                     rules={[
                       {
                         required: true,
-                        message: "Please enter a time",
+                        message: "Please enter a folder name",
                       },
                     ]}
                   >
@@ -302,16 +316,33 @@ const Page = () => {
               <h1 className="font-[800] Poppins">Recent Folders</h1>
               <h1 className="text-[#0e5fcadd] font-sans">view all</h1>
             </div>
-            <div className="flex  flex-wrap gap-[10px] ">
-              <div className="border border-1px p-[30px] rounded-[8px] text-center cursor-pointer">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                <h1>{folderName}</h1>
-              </div>
+            <div className="flex flex-wrap gap-[10px]">
+              {folderIds?.map(
+                (folder: any, index: any) => (
+                  console.log("folder", folder),
+                  (
+                    <div
+                      key={index}
+                      className="border border-1px p-[30px] rounded-[8px] text-center cursor-pointer"
+                    >
+                      <Image
+                        src={folder?.folderImage}
+                        width={100}
+                        height={100}
+                        alt=""
+                      />
+                      <h1>{folder?.foldername}</h1>
+                      <Button
+                        onClick={() => {
+                          handleDelete(folder);
+                        }}
+                      >
+                        delete
+                      </Button>
+                    </div>
+                  )
+                )
+              )}
             </div>
           </div>
           <div className="w-[95%] ">

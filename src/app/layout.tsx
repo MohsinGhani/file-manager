@@ -1,28 +1,19 @@
 "use client";
+import "./globals.css";
+
 import { createContext, useContext, useEffect, useState } from "react";
-import {
-  ConfirmationResult,
-  RecaptchaVerifier,
-  onAuthStateChanged,
-  signInWithPhoneNumber,
-} from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import DynamicHeader from "./component/header";
-import "./globals.css";
 
 type Dispatch<T> = (action: T) => void;
 
-interface AuthContextType {
-  user: null;
-  setUser: Dispatch<any>;
-  setUpRecaptcha: (number: any) => Promise<ConfirmationResult>;
-}
-
-const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext({
   user: null,
   setUser: () => {},
-  setUpRecaptcha: (number: any) => Promise.resolve({} as ConfirmationResult),
+} as {
+  user: null;
+  setUser: Dispatch<any>;
 });
 
 export default function RootLayout({
@@ -31,16 +22,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [user, setUser] = useState(null);
-
-  const setUpRecaptcha = (number: any) => {
-    const recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {}
-    );
-    recaptchaVerifier.render();
-    return signInWithPhoneNumber(auth, number, recaptchaVerifier);
-  };
 
   useEffect(() => {
     onAuthStateChanged(auth, async (u) => {
@@ -75,7 +56,7 @@ export default function RootLayout({
 
   return (
     <>
-      <AuthContext.Provider value={{ user, setUser, setUpRecaptcha }}>
+      <AuthContext.Provider value={{ user, setUser }}>
         <html lang="en">
           <body>{children}</body>
         </html>
