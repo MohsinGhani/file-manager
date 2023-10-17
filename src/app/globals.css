@@ -20,3 +20,16 @@
 .ant-progress-bg {
   height: 15px !important;
 }
+
+@keyframes rotateTopToBottom {
+  0% {
+    transform: rotatey(0deg); /* Rotate from the top (0 degrees) */
+  }
+  100% {
+    transform: rotatey(360deg); /* Rotate to the bottom (360 degrees) */
+  }
+}
+
+.rotate-top-to-bottom {
+  animation: rotateTopToBottom 10s linear infinite;
+}

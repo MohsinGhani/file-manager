@@ -31,16 +31,13 @@ export default function RootLayout({
           const userSnapshot = await getDoc(userDoc);
 
           if (userSnapshot.exists()) {
-            const userData = userSnapshot.data();
-            const { role } = userData;
-
             const updatedUser: any = {
               uid: u.uid,
               email: u.email,
-              role: role,
             };
 
             setUser(updatedUser);
+            console.log("User role:", updatedUser);
           } else {
             setUser(null);
           }

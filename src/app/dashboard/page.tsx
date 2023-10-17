@@ -1,23 +1,37 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Button, Progress, Tooltip } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { PlusCircleOutlined, HomeFilled } from "@ant-design/icons";
-import { Divider, Radio, Table } from "antd";
+import { Alert, Button, Form, Modal, Progress, Tooltip, message } from "antd";
+
+import {
+  PlusCircleOutlined,
+  HomeFilled,
+  CloseOutlined,
+} from "@ant-design/icons";
+import { Table } from "antd";
 import {
   SearchOutlined,
-  UserOutlined,
-  VideoCameraOutlined,
   DeleteOutlined,
   FileOutlined,
-  StarOutlined,
 } from "@ant-design/icons";
-
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "../../../firebase";
+import { useParams, useRouter } from "next/navigation";
+import { useAuthContext } from "../layout";
 import { Layout } from "antd";
 const { Sider } = Layout;
 import { Input, Menu } from "antd";
 import menu from "../component/data/menu";
+import SideBar from "../component/sideBar";
+
 interface DataType {
   key: React.Key;
   name: string;
@@ -63,35 +77,28 @@ const data: DataType[] = [
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "2",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "3",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
+    key: "4",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
-    key: "1",
-    name: "icons8-nature-100.png",
-    Modified: "july/32/2023",
-    Size: "0.00 MB",
-    delete: "icons8-nature-100.png",
-  },
-  {
-    key: "1",
+    key: "5",
     name: "icons8-nature-100.png",
     Modified: "july/32/2023",
     Size: "0.00 MB",
@@ -99,75 +106,105 @@ const data: DataType[] = [
   },
 ];
 const Page = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { user }: { user: any } = useAuthContext();
+  const [eventData, setEventData] = useState<any>(null);
+  const [folderIds, setFolderId] = useState<any>(null);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const params: any = useParams();
+  const [form] = Form.useForm();
+  const uid = user?.uid;
+  const { folderId } = params;
+
+  const isEditMode = folderId && folderId !== uid;
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+  console.log("folderId", folderId);
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+  const handleEvent = async () => {
+    try {
+      await form.validateFields();
+      setLoading(true);
+      const { foldername } = form.getFieldsValue();
+
+      if (isEditMode) {
+        if (eventData && eventData.folderId) {
+          const docRef = doc(db, "folder", eventData.folderId);
+          await updateDoc(docRef, {
+            foldername: foldername,
+          });
+          message.success(`Folder updated successfully`);
+        } else {
+          message.error(`Folder data is incomplete for editing`);
+        }
+      } else {
+        const eventData = {
+          foldername: foldername,
+          folderImage: "/images/file_explorer (2).webp",
+        };
+        const colref = collection(db, "folder");
+        const docRef = await addDoc(colref, eventData);
+        message.success(`Folder created successfully`);
+        setEventData({ folderId: docRef.id, ...eventData });
+      }
+    } catch (error: any) {
+      console.error("Error:", error);
+      message.error(error?.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (folder: any) => {
+    try {
+      const docRef = doc(db, "folder", folder.folderId);
+      await deleteDoc(docRef);
+      message.success(`Folder "${folder.foldername}" deleted successfully`);
+
+      setFolderId((prevFolderIds: any) =>
+        prevFolderIds.filter((f: any) => f.id !== folder.folderId)
+      );
+    } catch (error: any) {
+      console.error("Error:", error);
+      message.error(`Error deleting folder: ${error?.message}`);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const q = query(collection(db, "folder"));
+        const querySnapshot = await getDocs(q);
+        const folderData: any = [];
+
+        querySnapshot.forEach((doc) => {
+          const docData = doc.data();
+          0;
+          folderData.push({ folderId: doc.id, ...docData });
+        });
+
+        setFolderId(folderData);
+      } catch (error: any) {
+        console.error("Error fetching data:", error);
+        message.error(error?.message);
+      }
+    };
+
+    fetchData();
+  }, [user, folderId]);
 
   return (
     <>
       <div className="flex   bg-[#c4c4c4] ">
         <Layout className="min-h-[100vh] ">
-          <Sider className="!bg-[#faf9f9] " collapsed={collapsed}>
-            {" "}
-            <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center">
-              <Image
-                src="/images/cloud-data.png"
-                width={100}
-                height={100}
-                alt=""
-              />
-              <div>
-                <h1 className="text-center font-[900] text-[24px] flex items-center text-[#275a94]">
-                  cloud{" "}
-                  <p className="bg-[#b6dbf0] p-[5px] rounded-[10px]">Store</p>
-                </h1>
-              </div>
-            </div>
-            <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
-              <Button className="text-center text-[#fff]  flex items-center h-[50px] text-[14px]  bg-[#0d6eaf]">
-                Add New File
-                <PlusCircleOutlined className="text-[18px]" />
-              </Button>
-
-              <Button className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#539ecf]">
-                Create Folder
-                <PlusCircleOutlined className="text-[18px]" />
-              </Button>
-              <br></br>
-              <br></br>
-              <Button className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#0d6eaf]">
-                <HomeFilled />
-                Home
-              </Button>
-
-              <div className="demo-logo-vertical" />
-              <div>
-              {...menu.list.map((item)=>(
-                <div>{item.name}
-              <path strokeLinecap="round"
-              strokeLinejoin="round"
-              d={item.logo}
-              />
-                
-                </div>
-              )
-
-              )}
-            </div>
-            </div>
-            {/* <Menu
-              className="bg-[#faf9f9] flex flex-col  items-center justify-center mt-[40px] text-[16px] font-[500] font-poppins text-[#8591A3]"
-              mode="inline"
-              defaultSelectedKeys={["1"]}
-            {menu.list.map((item)=>{
-<div>{item.name}</div>
-
-            }
-
-            )}
-            /> */}
-          
-          </Sider>
+          <SideBar />
         </Layout>
-     
+
         <div className="w-[55%] bg-[#e6e6e6] max-w-[1280px] flex flex-col mx-auto items-center gap-[20px] ">
           <Input
             className="w-[95%] mt-[20px] text-[14px] h-[40px] rounded-[8px]"
@@ -180,43 +217,35 @@ const Page = () => {
               <h1 className="font-[800] Poppins">Recent Folders</h1>
               <h1 className="text-[#0e5fcadd] font-sans">view all</h1>
             </div>
-            <div className="flex  flex-wrap gap-[10px] ">
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                <h1>react</h1>
-              </div>
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                Youtube
-              </div>
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                Angular
-              </div>
-              <div className="border border-1px p-[30px] rounded-[8px] text-center">
-                <Image
-                  src="/images/file_explorer (2).webp"
-                  width={100}
-                  height={100}
-                  alt=""
-                />
-                Projects
-              </div>
+            <div className="flex flex-wrap gap-[10px]">
+              {folderIds?.map(
+                (folder: any, index: any) => (
+                  console.log("folder", folder),
+                  (
+                    <div
+                      onClick={() => {
+                        router.push("/dashboard/inner-folder");
+                      }}
+                      key={index}
+                      className="shadow-md p-[30px] rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform"
+                    >
+                      <CloseOutlined
+                        onClick={() => {
+                          handleDelete(folder);
+                        }}
+                        className="absolute top-0 right-0 p-2 cursor-pointer text-red-500 hover:text-red-700"
+                      />
+                      <Image
+                        src={folder?.folderImage}
+                        width={100}
+                        height={100}
+                        alt=""
+                      />
+                      <h1>{folder?.foldername}</h1>
+                    </div>
+                  )
+                )
+              )}
             </div>
           </div>
           <div className="w-[95%] ">
@@ -247,7 +276,7 @@ const Page = () => {
             </Tooltip>
           </div>
           <div>
-            <div className="flex justify-between p-[10px] mt-[20px]">
+            <div className=" shadow-md w-[90%] items-center mx-auto rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform   flex justify-between p-[10px] mt-[20px]">
               <div className=" flex">
                 <Image
                   src="/images/file_explorer (2).webp"
@@ -268,7 +297,27 @@ const Page = () => {
                 </div>
               </div>
             </div>
-            <hr></hr>
+            <div className=" shadow-md w-[90%] items-center mx-auto rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform   flex justify-between p-[10px] mt-[20px]">
+              <div className=" flex">
+                <Image
+                  src="/images/file_explorer (2).webp"
+                  width={100}
+                  height={100}
+                  alt=""
+                />
+                <div className="">
+                  <h1 className="font-[600] font-serif font-poppins ">
+                    Images
+                  </h1>
+                  <p className="font-poppins text-[#8591A3]">98 files</p>
+                </div>
+              </div>
+              <div className="flex justify-between flex-row text-center items-center">
+                <div className="">
+                  <h1 className="font-[900] text-[24px]">50.6MB</h1>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
