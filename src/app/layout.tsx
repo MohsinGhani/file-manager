@@ -34,10 +34,12 @@ export default function RootLayout({
             const updatedUser: any = {
               uid: u.uid,
               email: u.email,
+              firstName: userSnapshot.data().firstName,
+              lastName: userSnapshot.data().lastName,
             };
 
             setUser(updatedUser);
-            console.log("User role:", updatedUser);
+            console.log("User :", updatedUser);
           } else {
             setUser(null);
           }

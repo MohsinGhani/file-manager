@@ -8,7 +8,6 @@ import { Button, Checkbox, Form, Input, Modal } from "antd";
 
 import { auth } from "../../../firebase";
 import { CloseOutlined } from "@ant-design/icons";
-import { useAuthContext } from "../layout";
 
 const Page = () => {
   const [form] = Form.useForm();
@@ -114,7 +113,7 @@ const Page = () => {
 
         <div className="flex justify-between">
           <Form.Item name="remember" valuePropName="checked">
-            <Checkbox className="mr-[5px] cursor-pointer items-center flex text-[#b82f2f]   font-poppins text-[16px] font-[500]">
+            <Checkbox className="mr-[5px] cursor-pointer items-center flex text-[#cc9726]   font-poppins text-[16px] font-[500]">
               Remember me
             </Checkbox>
           </Form.Item>
@@ -122,7 +121,7 @@ const Page = () => {
             onClick={() => {
               router.push("/forgot-password");
             }}
-            className="text-[#b82f2f]  font-poppins text-[16px] font-[500] cursor-pointer"
+            className="text-[#cc9726]  font-poppins text-[16px] font-[500] cursor-pointer"
           >
             Forgot password?
           </p>
@@ -131,7 +130,7 @@ const Page = () => {
           <Button
             htmlType="submit"
             loading={loading}
-            className="rounded-[10px] bg-[#790909]  max-w-[450px] w-full h-[50px]  login text-white text-[18px] font-[500]  font-poppins"
+            className="rounded-[10px] bg-[#cc9726] max-w-[450px] w-full h-[50px]  login text-white text-[18px] font-[500]  font-poppins"
           >
             Sign in
           </Button>
@@ -140,9 +139,9 @@ const Page = () => {
 
       <Button
         onClick={() => {
-          router.push("/signup");
+          router.push("/sign-up");
         }}
-        className="rounded-[10px] bg-[#790909]  max-w-[450px] w-full h-[50px]  login text-white text-[18px] font-[500]  font-poppins"
+        className="rounded-[10px] bg-[#cc9726]  max-w-[450px] w-full h-[50px]  login text-white text-[18px] font-[500]  font-poppins"
       >
         Sign up
       </Button>

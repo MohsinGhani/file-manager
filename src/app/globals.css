@@ -23,13 +23,17 @@
 
 @keyframes rotateTopToBottom {
   0% {
-    transform: rotatey(0deg); /* Rotate from the top (0 degrees) */
+    transform: rotatey(0deg);
   }
   100% {
-    transform: rotatey(360deg); /* Rotate to the bottom (360 degrees) */
+    transform: rotatey(360deg);
   }
 }
 
 .rotate-top-to-bottom {
   animation: rotateTopToBottom 10s linear infinite;
+}
+
+.ant-dropdown-menu {
+  margin-right: 20px !important;
 }

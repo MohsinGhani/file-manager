@@ -39,7 +39,7 @@ const SideBar = () => {
   const showModal = () => {
     setIsModalOpen(true);
   };
-  console.log("folderId", folderId);
+
   const handleCancel = () => {
     setIsModalOpen(false);
   };
@@ -77,21 +77,6 @@ const SideBar = () => {
     }
   };
 
-  const handleDelete = async (folder: any) => {
-    try {
-      const docRef = doc(db, "folder", folder.folderId);
-      await deleteDoc(docRef);
-      message.success(`Folder "${folder.foldername}" deleted successfully`);
-
-      setFolderId((prevFolderIds: any) =>
-        prevFolderIds.filter((f: any) => f.id !== folder.folderId)
-      );
-    } catch (error: any) {
-      console.error("Error:", error);
-      message.error(`Error deleting folder: ${error?.message}`);
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -117,100 +102,104 @@ const SideBar = () => {
   return (
     <>
       {" "}
-      <Sider className="!bg-[#faf9f9]">
-        {" "}
-        <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center">
-          <Image
-            src="/images/cloud-data.png"
-            width={100}
-            height={100}
-            alt=""
-            className=""
-          />
-          <div>
-            <h1 className="text-center font-[900] text-[24px] flex items-center text-[#275a94]">
-              cloud <p className="bg-[#b6dbf0] p-[5px] rounded-[10px]">Store</p>
-            </h1>
+      '{" "}
+      <Layout className="min-h-[100vh] ">
+        <Sider className=" w-[30%] !bg-[#faf9f9]">
+          {" "}
+          <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center">
+            <Image
+              src="/images/cloud-data.png"
+              width={100}
+              height={100}
+              alt=""
+              className=""
+            />
+            <div>
+              <h1 className="text-center font-[900] text-[24px] flex items-center text-[#275a94]">
+                cloud{" "}
+                <p className="bg-[#b6dbf0] p-[5px] rounded-[10px]">Store</p>
+              </h1>
+            </div>
           </div>
-        </div>
-        <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
-          <Button className="text-center text-[#fff]  flex items-center h-[50px] text-[14px]  bg-[#0d6eaf]">
-            Add New File
-            <PlusCircleOutlined className="text-[18px]" />
-          </Button>
-
-          <Button
-            className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#539ecf]"
-            onClick={showModal}
-          >
-            Create Folder
-            <PlusCircleOutlined className="text-[18px]" />
-          </Button>
-          <br></br>
-          <br></br>
-          <Button className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#0d6eaf]">
-            <HomeFilled />
-            Home
-          </Button>
           <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
-            <Modal
-              title="Create Folder"
-              open={isModalOpen}
-              cancelButtonProps={{ style: { display: "none" } }}
-              okButtonProps={{ style: { display: "none" } }}
+            <Button className="text-center text-[#fff]  flex items-center h-[50px] text-[14px]  bg-[#0d6eaf]">
+              Add New File
+              <PlusCircleOutlined className="text-[18px]" />
+            </Button>
+
+            <Button
+              className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#539ecf]"
+              onClick={showModal}
             >
-              <Form
-                form={form}
-                onFinish={handleEvent}
-                className="w-full"
-                initialValues={isEditMode ? eventData : { foldername: "" }}
+              Create Folder
+              <PlusCircleOutlined className="text-[18px]" />
+            </Button>
+            <br></br>
+            <br></br>
+            <Button className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#0d6eaf]">
+              <HomeFilled />
+              Home
+            </Button>
+            <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
+              <Modal
+                title="Create Folder"
+                open={isModalOpen}
+                cancelButtonProps={{ style: { display: "none" } }}
+                okButtonProps={{ style: { display: "none" } }}
               >
-                <Form.Item
-                  name="foldername"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Please enter a folder name",
-                    },
-                  ]}
+                <Form
+                  form={form}
+                  onFinish={handleEvent}
+                  className="w-full"
+                  initialValues={isEditMode ? eventData : { foldername: "" }}
                 >
-                  <Input placeholder="Enter folder name" />
-                </Form.Item>
-                <div className="flex justify-end gap-2">
-                  <Button key="cancelButton" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-
-                  <Button
-                    loading={loading}
-                    htmlType="submit"
-                    key="customButton"
+                  <Form.Item
+                    name="foldername"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please enter a folder name",
+                      },
+                    ]}
                   >
-                    add
-                  </Button>
+                    <Input placeholder="Enter folder name" />
+                  </Form.Item>
+                  <div className="flex justify-end gap-2">
+                    <Button key="cancelButton" onClick={handleCancel}>
+                      Cancel
+                    </Button>
+
+                    <Button
+                      loading={loading}
+                      htmlType="submit"
+                      key="customButton"
+                    >
+                      add
+                    </Button>
+                  </div>
+                </Form>
+              </Modal>
+
+              <div className="demo-logo-vertical" />
+            </div>
+
+            <div className="flex gap-6 flex-col">
+              {menu.list.map((item, index) => (
+                <div
+                  onClick={() => {
+                    router.push("/inner-folder");
+                  }}
+                  className="flex gap-4 text-[18px] text-[#707070] cursor-pointer "
+                  key={index}
+                >
+                  {item.logo}
+                  {item.name}
                 </div>
-              </Form>
-            </Modal>
-
-            <div className="demo-logo-vertical" />
+              ))}
+            </div>
           </div>
-
-          <div className="flex gap-6 flex-col">
-            {menu.list.map((item, index) => (
-              <div
-                onClick={() => {
-                  router.push("/inner-folder");
-                }}
-                className="flex gap-4 text-[18px] text-[#707070] cursor-pointer "
-                key={index}
-              >
-                {item.logo}
-                {item.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      </Sider>
+        </Sider>
+      </Layout>
     </>
   );
 };

@@ -19,9 +19,8 @@ import { useAuthContext } from "../layout";
 const Page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [number, setNumber] = useState("");
+
   const router = useRouter();
-  const { setUpRecaptcha } = useAuthContext();
 
   const onFinish = async (values: any) => {
     console.log("🚀 ~ values:", values);
@@ -30,7 +29,6 @@ const Page = () => {
       firstName,
       lastName,
       email,
-      role,
       phoneNumber,
       password,
       confirmPassword,
@@ -199,7 +197,7 @@ const Page = () => {
           <Form.Item>
             <Button
               htmlType="submit"
-              className="rounded-[10px] bg-[#790909] max-w-[460px] w-full h-[50px] login text-white text-[18px] font-[500] font-poppins"
+              className="rounded-[10px] bg-[#ddad45] max-w-[460px] w-full h-[50px] login text-white text-[18px] font-[500] font-poppins"
             >
               Sign up
             </Button>

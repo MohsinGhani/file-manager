@@ -1,12 +1,23 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Alert, Button, Form, Modal, Progress, Tooltip, message } from "antd";
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Form,
+  MenuProps,
+  Modal,
+  Progress,
+  Tooltip,
+  message,
+} from "antd";
 
 import {
   PlusCircleOutlined,
   HomeFilled,
   CloseOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { Table } from "antd";
 import {
@@ -29,7 +40,7 @@ import { useAuthContext } from "../layout";
 import { Layout } from "antd";
 const { Sider } = Layout;
 import { Input, Menu } from "antd";
-import menu from "../component/data/menu";
+import { getAuth, signOut } from "firebase/auth";
 import SideBar from "../component/sideBar";
 
 interface DataType {
@@ -118,48 +129,6 @@ const Page = () => {
   const uid = user?.uid;
   const { folderId } = params;
 
-  const isEditMode = folderId && folderId !== uid;
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-  console.log("folderId", folderId);
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-  const handleEvent = async () => {
-    try {
-      await form.validateFields();
-      setLoading(true);
-      const { foldername } = form.getFieldsValue();
-
-      if (isEditMode) {
-        if (eventData && eventData.folderId) {
-          const docRef = doc(db, "folder", eventData.folderId);
-          await updateDoc(docRef, {
-            foldername: foldername,
-          });
-          message.success(`Folder updated successfully`);
-        } else {
-          message.error(`Folder data is incomplete for editing`);
-        }
-      } else {
-        const eventData = {
-          foldername: foldername,
-          folderImage: "/images/file_explorer (2).webp",
-        };
-        const colref = collection(db, "folder");
-        const docRef = await addDoc(colref, eventData);
-        message.success(`Folder created successfully`);
-        setEventData({ folderId: docRef.id, ...eventData });
-      }
-    } catch (error: any) {
-      console.error("Error:", error);
-      message.error(error?.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async (folder: any) => {
     try {
       const docRef = doc(db, "folder", folder.folderId);
@@ -197,13 +166,45 @@ const Page = () => {
 
     fetchData();
   }, [user, folderId]);
+  const signout = () => {
+    const auth = getAuth();
+    signOut(auth)
+      .then(() => {
+        router.push("/login");
+      })
+      .catch((error) => {
+        error.message;
+      });
+  };
 
+  const items: MenuProps["items"] = [
+    {
+      key: "1",
+      label: (
+        <a
+          onClick={() => {
+            signout();
+          }}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          LogOut
+        </a>
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <a rel="noopener noreferrer" href="https://www.aliyun.com">
+          Contact Us
+        </a>
+      ),
+    },
+  ];
   return (
     <>
       <div className="flex   bg-[#c4c4c4] ">
-        <Layout className="min-h-[100vh] ">
-          <SideBar />
-        </Layout>
+        <SideBar />
 
         <div className="w-[55%] bg-[#e6e6e6] max-w-[1280px] flex flex-col mx-auto items-center gap-[20px] ">
           <Input
@@ -218,34 +219,29 @@ const Page = () => {
               <h1 className="text-[#0e5fcadd] font-sans">view all</h1>
             </div>
             <div className="flex flex-wrap gap-[10px]">
-              {folderIds?.map(
-                (folder: any, index: any) => (
-                  console.log("folder", folder),
-                  (
-                    <div
-                      onClick={() => {
-                        router.push("/dashboard/inner-folder");
-                      }}
-                      key={index}
-                      className="shadow-md p-[30px] rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform"
-                    >
-                      <CloseOutlined
-                        onClick={() => {
-                          handleDelete(folder);
-                        }}
-                        className="absolute top-0 right-0 p-2 cursor-pointer text-red-500 hover:text-red-700"
-                      />
-                      <Image
-                        src={folder?.folderImage}
-                        width={100}
-                        height={100}
-                        alt=""
-                      />
-                      <h1>{folder?.foldername}</h1>
-                    </div>
-                  )
-                )
-              )}
+              {folderIds?.map((folder: any, index: any) => (
+                <div
+                  key={index}
+                  className="shadow-md p-[30px] rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform"
+                >
+                  <CloseOutlined
+                    onClick={() => {
+                      handleDelete(folder);
+                    }}
+                    className="absolute top-0 right-0 p-2 cursor-pointer text-red-600 hover:text-red-700"
+                  />
+                  <Image
+                    onClick={() => {
+                      router.push("/dashboard/inner-folder");
+                    }}
+                    src={folder?.folderImage}
+                    width={100}
+                    height={100}
+                    alt=""
+                  />
+                  <h1>{folder?.foldername}</h1>
+                </div>
+              ))}
             </div>
           </div>
           <div className="w-[95%] ">
@@ -260,12 +256,17 @@ const Page = () => {
               <b className="font-[600]">S</b>
             </div>
             <div className="ml-[10px]">
-              <h1 className="font-[700] text-[20px] text-left">Sarib Ghouri</h1>
-              <h1 className="font-[500] text-[#b3b0b0] ">
-                sarib.ghouri92@gmail.com
+              <h1 className="font-[700] text-[20px] text-left">
+                {user?.firstName} {user?.lastName}
               </h1>
+              <h1 className="font-[500] text-[#b3b0b0] ">{user?.email}</h1>
             </div>
           </div>
+
+          <Dropdown menu={{ items }} placement="bottomLeft" trigger={["click"]}>
+            <SettingOutlined className="flex justify-end absolute top-0 right-0 p-[20px] text-[24px] cursor-pointer" />
+          </Dropdown>
+
           <div className="flex  items-center justify-center mt-[20px]">
             <Tooltip
               className="w-[90%] "
