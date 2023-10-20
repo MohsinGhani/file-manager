@@ -1,3 +1,4 @@
+"use client";
 import {
   DeleteOutlined,
   FileOutlined,
@@ -54,6 +55,7 @@ const SideBar = () => {
           const docRef = doc(db, "folder", eventData.folderId);
           await updateDoc(docRef, {
             foldername: foldername,
+            folderId: eventData.folderId,
           });
           message.success(`Folder updated successfully`);
         } else {
@@ -88,6 +90,7 @@ const SideBar = () => {
           const docData = doc.data();
           0;
           folderData.push({ folderId: doc.id, ...docData });
+          console.log("eventData", folderData);
         });
 
         setFolderId(folderData);
@@ -103,8 +106,8 @@ const SideBar = () => {
     <>
       {" "}
       '{" "}
-      <Layout className="min-h-[100vh] ">
-        <Sider className=" w-[30%] !bg-[#faf9f9]">
+      <Layout className="min-h-[100vh] contrast-150 ">
+        <Sider className=" w-[30%] !bg-[#faf9f9] ">
           {" "}
           <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center">
             <Image
