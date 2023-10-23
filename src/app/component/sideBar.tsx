@@ -5,8 +5,15 @@ import {
   HomeFilled,
   PlusCircleOutlined,
 } from "@ant-design/icons";
-import { Button, Form, Layout, Modal, message } from "antd";
-
+import { Button, Form, Layout, Modal, Upload, message } from "antd";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  uploadBytes,
+} from "firebase/storage";
+import { useRef } from "react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 const { Sider } = Layout;
@@ -24,31 +31,42 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../firebase";
 import menu from "./data/menu";
-
+import { UploadOutlined } from "@ant-design/icons";
 const SideBar = () => {
   const { user }: { user: any } = useAuthContext();
   const [eventData, setEventData] = useState<any>(null);
   const [folderIds, setFolderId] = useState<any>(null);
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [SHOWisModalOpen, setSHOWisModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
+  const [fileList, setFileList] = useState([]);
   const [form] = Form.useForm();
   const uid = user?.uid;
+  const metadata = {
+    contentType: "image/jpeg",
+  };
   const { folderId } = params;
   const isEditMode = folderId && folderId !== uid;
   const showModal = () => {
     setIsModalOpen(true);
   };
+  const showoPENModal = () => {
+    setSHOWisModalOpen(true);
+  };
 
   const handleCancel = () => {
     setIsModalOpen(false);
+  };
+  const handleCancell = () => {
+    setSHOWisModalOpen(false);
   };
   const handleEvent = async () => {
     try {
       await form.validateFields();
       setLoading(true);
-      const { foldername } = form.getFieldsValue();
+      const { foldername, fileupload } = form.getFieldsValue();
 
       if (isEditMode) {
         if (eventData && eventData.folderId) {
@@ -102,6 +120,38 @@ const SideBar = () => {
 
     fetchData();
   }, [user, folderId]);
+
+  const storage = getStorage();
+  const { fileupload } = form.getFieldsValue();
+  // Create a reference to 'mountains.jpg'
+  const mountainsRef: any = ref(storage, "mountains.jpg");
+  const eventfileData = {
+    fileupload: fileupload,
+    folderImage: "/images/file_explorer (2).webp",
+  };
+  const handleFileUpload = async () => {
+    // const storage = getStorage();
+    // const mountainImagesRef = ref(storage, "images/mountains.jpg");
+    // mountainsRef.name === mountainImagesRef.name; // true
+    // mountainsRef.fullPath === mountainImagesRef.fullPath;
+    // setFileList(mountainsRef);
+    // if (mountainImagesRef) {
+    //   const storageRef = ref(
+    //     storage,
+    //     `your-upload-path/${mountainImagesRef.name}`
+    //   );
+    //   try {
+    //     // uploadBytes(storageRef, fileupload).then((snapshot) => {
+    //     //   console.log("Uploaded a blob or file!");
+    //     // });
+    //   } catch (error) {
+    //     console.error("Error uploading file:", error);
+    //   }
+    // }
+  };
+  const onFileChange = (info: any) => {
+    setFileList(info.fileList);
+  };
   return (
     <>
       {" "}
@@ -125,11 +175,74 @@ const SideBar = () => {
             </div>
           </div>
           <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
-            <Button className="text-center text-[#fff]  flex items-center h-[50px] text-[14px]  bg-[#0d6eaf]">
+            <Button
+              className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#0d6eaf]"
+              id="upload-button"
+              onClick={showoPENModal}
+            >
               Add New File
-              <PlusCircleOutlined className="text-[18px]" />
             </Button>
+            <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
+              <Modal
+                title="ADD FILE"
+                open={SHOWisModalOpen}
+                cancelButtonProps={{ style: { display: "none" } }}
+                okButtonProps={{ style: { display: "none" } }}
+              >
+                <Form
+                  form={form}
+                  onFinish={handleFileUpload}
+                  className="w-full"
+                  initialValues={
+                    isEditMode ? eventfileData : { fileupload: "" }
+                  }
+                >
+                  <Form.Item
+                    name="fileupload"
+                    valuePropName="fileList"
+                    getValueFromEvent={onFileChange}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please ADD FILE UPLOAD",
+                      },
+                    ]}
+                  >
+                    <Upload.Dragger
+                      name="fileupload"
+                      customRequest={() => {}}
+                      fileList={fileList}
+                      onChange={onFileChange}
+                    >
+                      <p className="ant-upload-drag-icon">
+                        <UploadOutlined />
+                      </p>
+                      <p className="ant-upload-text">
+                        Click or drag file to this area to upload
+                      </p>
+                      <p className="ant-upload-hint">
+                        Support for a single or bulk upload.
+                      </p>
+                    </Upload.Dragger>
+                  </Form.Item>
+                  <div className="flex justify-end gap-2">
+                    <Button key="cancelButton" onClick={handleCancell}>
+                      Cancel
+                    </Button>
 
+                    <Button
+                      loading={loading}
+                      onClick={handleFileUpload}
+                      key="customButton"
+                    >
+                      add
+                    </Button>
+                  </div>
+                </Form>
+              </Modal>
+
+              <div className="demo-logo-vertical" />
+            </div>
             <Button
               className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#539ecf]"
               onClick={showModal}

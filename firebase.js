@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 <script src="https://www.gstatic.com/firebasejs/{FIREBASE-SDK-VERSION}/firebase.js"></script>;
 
 const firebaseConfig = {

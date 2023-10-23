@@ -15,7 +15,7 @@ const PagesCom = () => {
       </Layout>
 
       <div className="w-[55%] bg-[#E6E6E6] ">
-        <div className="flex justify-between bg-[#000000] p-[9px]">
+        <div className="flex justify-between bg-[#818181] p-[9px]">
           <h1 className="text-[#fff] text-center">Name</h1>
           <Divider className="bg-[#fff] h-[40px]" type="vertical" />
           <h1 className="text-[#fff]">Date modified</h1>
