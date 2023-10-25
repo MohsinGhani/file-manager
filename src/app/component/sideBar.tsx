@@ -1,19 +1,16 @@
 "use client";
+import { HomeFilled, PlusCircleOutlined } from "@ant-design/icons";
 import {
-  DeleteOutlined,
-  FileOutlined,
-  HomeFilled,
-  PlusCircleOutlined,
-} from "@ant-design/icons";
-import { Button, Form, Layout, Modal, Upload, message } from "antd";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  uploadBytes,
-} from "firebase/storage";
-import { useRef } from "react";
+  Button,
+  Form,
+  Layout,
+  Modal,
+  Upload,
+  UploadProps,
+  message,
+} from "antd";
+import { getStorage, ref, uploadBytes, uploadString } from "firebase/storage";
+
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 const { Sider } = Layout;
@@ -26,7 +23,9 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  getFirestore,
   query,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
@@ -42,6 +41,8 @@ const SideBar = () => {
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
   const [fileList, setFileList] = useState([]);
+  const [fileURL, setFileURL] = useState(""); // State to store the file URL after upload
+
   const [form] = Form.useForm();
   const uid = user?.uid;
   const metadata = {
@@ -96,6 +97,71 @@ const SideBar = () => {
       setLoading(false);
     }
   };
+  const { fileupload } = form.getFieldsValue();
+
+  const eventfileData = {
+    fileupload: fileupload,
+    folderImage: "/images/file_explorer (2).webp",
+  };
+  // const handleFileUpload = async () => {
+  //   try {
+  //     const storageRef = getStorage();
+  //     const fileRef = ref(storageRef, " /images/file_explorer (2).webp");
+  //     console.log("fileRef", fileRef);
+  //     const uploadTask = ref(storageRef, " /images/file_explorer (2).webp");
+  //     console.log("uploadTask", uploadTask);
+  //     fileRef.name === uploadTask.name; // true
+  //     fileRef.fullPath === uploadTask.fullPath;
+
+  //     const message = "This is my message.";
+  //     uploadString(fileRef, message).then((snapshot) => {
+  //       console.log("Uploaded a raw string!");
+  //     });
+  //     const uploadTasks = uploadBytes(uploadTask, fileRef, metadata);
+  //     console.log("uploadTasks", uploadTasks);
+  //   } catch (error) {
+  //     // Handle errors
+  //     console.error("Error uploading file: ", error);
+  //   }
+  // };
+
+  const handleFileUpload = async () => {
+    try {
+      const storageRef = getStorage();
+      const fileRef = ref(storageRef, " /images/file_explorer (2).webp");
+      console.log("fileRef", fileRef);
+      const uploadTask = ref(storageRef, " /images/file_explorer (2).webp");
+      console.log("uploadTask", uploadTask);
+      fileRef.name === uploadTask.name; // true
+      fileRef.fullPath === uploadTask.fullPath;
+
+      const message = "This is my message.";
+      uploadString(fileRef, message).then((snapshot) => {
+        console.log("Uploaded a raw string!");
+      });
+      const uploadTasks = uploadBytes(uploadTask, fileRef, metadata);
+      console.log("uploadTasks", uploadTasks);
+      const db = getFirestore();
+      const collectionRef = doc(db, "fileData");
+      console.log("collectionRef", collectionRef);
+      const eventData = {
+        fileupload: fileupload,
+        folderImage: "/images/file_explorer (2).webp",
+      };
+
+      await setDoc(collectionRef, eventData);
+
+      console.log("File uploaded and data added to Firestore.");
+    } catch (error) {
+      console.error(
+        "Error uploading file or adding data to Firestore: ",
+        error
+      );
+    }
+  };
+  const onFileChange = (info: any) => {
+    setFileList(info.fileList);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -117,40 +183,37 @@ const SideBar = () => {
         message.error(error?.message);
       }
     };
-
+    handleFileUpload();
     fetchData();
   }, [user, folderId]);
-
-  const storage = getStorage();
-  const { fileupload } = form.getFieldsValue();
-  // Create a reference to 'mountains.jpg'
-  const mountainsRef: any = ref(storage, "mountains.jpg");
-  const eventfileData = {
-    fileupload: fileupload,
-    folderImage: "/images/file_explorer (2).webp",
-  };
-  const handleFileUpload = async () => {
-    // const storage = getStorage();
-    // const mountainImagesRef = ref(storage, "images/mountains.jpg");
-    // mountainsRef.name === mountainImagesRef.name; // true
-    // mountainsRef.fullPath === mountainImagesRef.fullPath;
-    // setFileList(mountainsRef);
-    // if (mountainImagesRef) {
-    //   const storageRef = ref(
-    //     storage,
-    //     `your-upload-path/${mountainImagesRef.name}`
-    //   );
-    //   try {
-    //     // uploadBytes(storageRef, fileupload).then((snapshot) => {
-    //     //   console.log("Uploaded a blob or file!");
-    //     // });
-    //   } catch (error) {
-    //     console.error("Error uploading file:", error);
-    //   }
-    // }
-  };
-  const onFileChange = (info: any) => {
-    setFileList(info.fileList);
+  const props: UploadProps = {
+    action: "https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188",
+    onChange({ file, fileList }) {
+      if (file.status !== "uploading") {
+        console.log(fileList);
+      }
+    },
+    defaultFileList: [
+      {
+        uid: "1",
+        name: "xxx.png",
+        status: "uploading",
+        percent: 33,
+      },
+      {
+        uid: "2",
+        name: "yyy.png",
+        status: "done",
+        url: "https://www.seiu1000.org/post/image-dimensions",
+      },
+      {
+        uid: "3",
+        name: "zzz.png",
+        status: "error",
+        response: "Server Error 500",
+        url: "file_explorer (2).webp",
+      },
+    ],
   };
   return (
     <>
@@ -176,13 +239,13 @@ const SideBar = () => {
           </div>
           <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
             <Button
-              className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#0d6eaf]"
+              className="text-center text-[#fff] flex items-center h-[50px] text-[14px] bg-[#0d6eaf]"
               id="upload-button"
               onClick={showoPENModal}
             >
               Add New File
             </Button>
-            <div className="flex  flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
+            <div className="flex flex-col justify-center mx-auto w-[80%] mt-[40px] gap-[14px]">
               <Modal
                 title="ADD FILE"
                 open={SHOWisModalOpen}
@@ -197,42 +260,17 @@ const SideBar = () => {
                     isEditMode ? eventfileData : { fileupload: "" }
                   }
                 >
-                  <Form.Item
-                    name="fileupload"
-                    valuePropName="fileList"
-                    getValueFromEvent={onFileChange}
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please ADD FILE UPLOAD",
-                      },
-                    ]}
-                  >
-                    <Upload.Dragger
-                      name="fileupload"
-                      customRequest={() => {}}
-                      fileList={fileList}
-                      onChange={onFileChange}
-                    >
-                      <p className="ant-upload-drag-icon">
-                        <UploadOutlined />
-                      </p>
-                      <p className="ant-upload-text">
-                        Click or drag file to this area to upload
-                      </p>
-                      <p className="ant-upload-hint">
-                        Support for a single or bulk upload.
-                      </p>
-                    </Upload.Dragger>
-                  </Form.Item>
+                  <Upload {...props}>
+                    <Button icon={<UploadOutlined />}>Upload</Button>
+                  </Upload>
+
                   <div className="flex justify-end gap-2">
                     <Button key="cancelButton" onClick={handleCancell}>
                       Cancel
                     </Button>
-
                     <Button
                       loading={loading}
-                      onClick={handleFileUpload}
+                      onClick={onFileChange}
                       key="customButton"
                     >
                       add
@@ -240,8 +278,6 @@ const SideBar = () => {
                   </div>
                 </Form>
               </Modal>
-
-              <div className="demo-logo-vertical" />
             </div>
             <Button
               className="text-center text-[#fff] flex  items-center h-[50px] text-[14px]   bg-[#539ecf]"
