@@ -55,21 +55,21 @@ const columns = [
 const data: DataType[] = [
   {
     key: "1",
-    name: "icons8-nature-100.png",
+    name: "camera_lense_0.jpeg",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
     key: "2",
-    name: "icons8-nature-100.png",
+    name: "file_explorer (1).webp",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
   },
   {
     key: "3",
-    name: "icons8-nature-100.png",
+    name: "cloud-data-storage.jpg",
     Modified: "july/32/2023",
     Size: "0.00 MB",
     delete: "icons8-nature-100.png",
@@ -143,7 +143,6 @@ const Page = () => {
     <>
       <div className="flex bg-[#c4c4c4]">
         <SideBar />
-
         <div className="w-[55%] bg-[#e6e6e6] max-w-[1280px] flex flex-col mx-auto items-center gap-[20px] ">
           <Input
             className="w-[95%] mt-[20px] text-[14px] h-[40px] rounded-[8px]"

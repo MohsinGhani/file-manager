@@ -59,7 +59,7 @@ const StorageSide = () => {
       </div>
 
       <Dropdown menu={{ items }} placement="bottomLeft" trigger={["click"]}>
-        <SettingOutlined className="flex justify-end absolute top-0 right-0 p-[20px] text-[24px] cursor-pointer" />
+        <SettingOutlined className=" SettingOutlined flex justify-end absolute top-5 right-5  text-[24px] cursor-pointer" />
       </Dropdown>
 
       <div className="flex  items-center justify-center mt-[20px]">

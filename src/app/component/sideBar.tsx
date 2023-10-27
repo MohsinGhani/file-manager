@@ -1,16 +1,8 @@
 "use client";
 import { HomeFilled, PlusCircleOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Form,
-  Layout,
-  Modal,
-  Upload,
-  UploadProps,
-  message,
-} from "antd";
-import { getStorage, ref, uploadBytes, uploadString } from "firebase/storage";
-
+import { Button, Form, Layout, List, Modal, Upload, message } from "antd";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { v4 } from "uuid";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 const { Sider } = Layout;
@@ -20,17 +12,14 @@ import { useParams, useRouter } from "next/navigation";
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
-  getFirestore,
   query,
-  setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "../../../firebase";
+import { db, storage } from "../../../firebase";
 import menu from "./data/menu";
-import { UploadOutlined } from "@ant-design/icons";
+
 const SideBar = () => {
   const { user }: { user: any } = useAuthContext();
   const [eventData, setEventData] = useState<any>(null);
@@ -41,7 +30,8 @@ const SideBar = () => {
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
   const [fileList, setFileList] = useState([]);
-  const [fileURL, setFileURL] = useState(""); // State to store the file URL after upload
+  const [fileURL, setFileURL] = useState("");
+  const [img, setIimg] = useState("");
 
   const [form] = Form.useForm();
   const uid = user?.uid;
@@ -60,6 +50,7 @@ const SideBar = () => {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
+
   const handleCancell = () => {
     setSHOWisModalOpen(false);
   };
@@ -103,65 +94,6 @@ const SideBar = () => {
     fileupload: fileupload,
     folderImage: "/images/file_explorer (2).webp",
   };
-  // const handleFileUpload = async () => {
-  //   try {
-  //     const storageRef = getStorage();
-  //     const fileRef = ref(storageRef, " /images/file_explorer (2).webp");
-  //     console.log("fileRef", fileRef);
-  //     const uploadTask = ref(storageRef, " /images/file_explorer (2).webp");
-  //     console.log("uploadTask", uploadTask);
-  //     fileRef.name === uploadTask.name; // true
-  //     fileRef.fullPath === uploadTask.fullPath;
-
-  //     const message = "This is my message.";
-  //     uploadString(fileRef, message).then((snapshot) => {
-  //       console.log("Uploaded a raw string!");
-  //     });
-  //     const uploadTasks = uploadBytes(uploadTask, fileRef, metadata);
-  //     console.log("uploadTasks", uploadTasks);
-  //   } catch (error) {
-  //     // Handle errors
-  //     console.error("Error uploading file: ", error);
-  //   }
-  // };
-
-  const handleFileUpload = async () => {
-    try {
-      const storageRef = getStorage();
-      const fileRef = ref(storageRef, " /images/file_explorer (2).webp");
-      console.log("fileRef", fileRef);
-      const uploadTask = ref(storageRef, " /images/file_explorer (2).webp");
-      console.log("uploadTask", uploadTask);
-      fileRef.name === uploadTask.name; // true
-      fileRef.fullPath === uploadTask.fullPath;
-
-      const message = "This is my message.";
-      uploadString(fileRef, message).then((snapshot) => {
-        console.log("Uploaded a raw string!");
-      });
-      const uploadTasks = uploadBytes(uploadTask, fileRef, metadata);
-      console.log("uploadTasks", uploadTasks);
-      const db = getFirestore();
-      const collectionRef = doc(db, "fileData");
-      console.log("collectionRef", collectionRef);
-      const eventData = {
-        fileupload: fileupload,
-        folderImage: "/images/file_explorer (2).webp",
-      };
-
-      await setDoc(collectionRef, eventData);
-
-      console.log("File uploaded and data added to Firestore.");
-    } catch (error) {
-      console.error(
-        "Error uploading file or adding data to Firestore: ",
-        error
-      );
-    }
-  };
-  const onFileChange = (info: any) => {
-    setFileList(info.fileList);
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -183,37 +115,72 @@ const SideBar = () => {
         message.error(error?.message);
       }
     };
-    handleFileUpload();
+
     fetchData();
   }, [user, folderId]);
-  const props: UploadProps = {
-    action: "https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188",
-    onChange({ file, fileList }) {
-      if (file.status !== "uploading") {
-        console.log(fileList);
-      }
-    },
-    defaultFileList: [
-      {
-        uid: "1",
-        name: "xxx.png",
-        status: "uploading",
-        percent: 33,
-      },
-      {
-        uid: "2",
-        name: "yyy.png",
-        status: "done",
-        url: "https://www.seiu1000.org/post/image-dimensions",
-      },
-      {
-        uid: "3",
-        name: "zzz.png",
-        status: "error",
-        response: "Server Error 500",
-        url: "file_explorer (2).webp",
-      },
-    ],
+  // const handleFileUpload = async (file: any) => {
+  //   try {
+  //     const storage = getStorage();
+  //     const firestore = getFirestore();
+
+  //     const storageRef = ref(storage, `images.jpeg/${file.name}`);
+  //     await uploadBytes(storageRef, file, metadata);
+
+  //     const downloadURL = await getDownloadURL(storageRef);
+
+  //     const collectionRef = doc(firestore, "fileData", "yourDocumentID");
+  //     const eventData = {
+  //       fileupload: downloadURL,
+  //       folderImage: `images.jpeg/${file.name}`,
+  //     };
+  //     await setDoc(collectionRef, eventData);
+
+  //     console.log("File uploaded and data added to Firestore.", eventData);
+  //   } catch (error) {
+  //     console.error("Error uploading file or adding data to Firestore:", error);
+  //   }
+  // };
+  // const onFileChange = (info: any) => {
+  //   const { file, fileList } = info;
+  //   console.log("file", file?.uid);
+  //   const updatedFileList = fileList?.map((item: any) => {
+  //     if (item.uid === file.uid) {
+  //       return {
+  //         ...item,
+  //         status: file.status,
+  //         name: file.name,
+  //         url: file.url,
+  //       };
+  //     }
+  //     return item;
+  //   });
+
+  //   setFileList(updatedFileList);
+
+  //   if (file?.status === "done") {
+  //     handleFileUpload(file.originFileObj);
+  //     console.log("file", file);
+  //   }
+  // };
+
+  // const onFileClick = (url: any) => {
+  //   window.open(url, "_blank");
+  // };
+  const handleFileUpload = (e: any) => {
+    if (e.target.files.length > 0) {
+      console.log("Selected file:", e.target.files[0]);
+      const imgsRef = ref(storage, `Imgs/${v4()}`);
+
+      uploadBytes(imgsRef, e.target.files[0]).then((snapshot) => {
+        console.log("Uploaded a blob or file!", snapshot);
+        getDownloadURL(snapshot.ref).then((url) => {
+          console.log("File available at", url);
+          setIimg(url);
+        });
+      });
+    } else {
+      console.log("No file selected");
+    }
   };
   return (
     <>
@@ -260,9 +227,28 @@ const SideBar = () => {
                     isEditMode ? eventfileData : { fileupload: "" }
                   }
                 >
-                  <Upload {...props}>
-                    <Button icon={<UploadOutlined />}>Upload</Button>
+                  <Upload action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188">
+                    <Button onChange={(e) => handleFileUpload(e)}>
+                      Upload
+                    </Button>
                   </Upload>
+                  <List
+                    dataSource={fileList}
+                    renderItem={(item: any) => (
+                      <List.Item
+                        actions={
+                          [
+                            // <a onClick={() => onFileClick(item.fileURL)}>Open</a>,
+                          ]
+                        }
+                      >
+                        <List.Item.Meta
+                          title={item.name}
+                          description={item.status}
+                        />
+                      </List.Item>
+                    )}
+                  />
 
                   <div className="flex justify-end gap-2">
                     <Button key="cancelButton" onClick={handleCancell}>
@@ -270,7 +256,7 @@ const SideBar = () => {
                     </Button>
                     <Button
                       loading={loading}
-                      onClick={onFileChange}
+                      // onClick={onFileChange}
                       key="customButton"
                     >
                       add
