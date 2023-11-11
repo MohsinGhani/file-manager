@@ -9,7 +9,7 @@ import { Button, Checkbox, Form, Input, Modal } from "antd";
 import { auth } from "../../../firebase";
 import { CloseOutlined } from "@ant-design/icons";
 
-const Page = () => {
+const L0gin = () => {
   const [form] = Form.useForm();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -119,7 +119,7 @@ const Page = () => {
           </Form.Item>
           <p
             onClick={() => {
-              router.push("/forgot-password");
+              router.push("/forgotPassword");
             }}
             className="text-[#cc9726]  font-poppins text-[16px] font-[500] cursor-pointer"
           >
@@ -148,4 +148,4 @@ const Page = () => {
     </div>
   );
 };
-export default Page;
+export default L0gin;

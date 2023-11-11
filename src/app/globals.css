@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* .ant-layout-sider-children {
-  width: 80% !important;
-} */
-
 .ant-layout-sider {
   min-width: 100% !important;
 }
@@ -49,4 +45,12 @@
   100% {
     transform: rotate(360deg);
   }
+}
+
+.ant-table-thead {
+  background-color: white !important;
+}
+
+.ant-table-cell {
+  background-color: white !important;
 }

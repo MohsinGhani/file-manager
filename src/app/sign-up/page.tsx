@@ -14,8 +14,6 @@ import { Button, Form, Input } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { doc, setDoc } from "firebase/firestore";
 
-import { useAuthContext } from "../layout";
-
 const Page = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,14 +23,7 @@ const Page = () => {
   const onFinish = async (values: any) => {
     console.log("🚀 ~ values:", values);
 
-    const {
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      password,
-      confirmPassword,
-    } = values;
+    const { lastName, email, phoneNumber, password, confirmPassword } = values;
 
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
@@ -193,7 +184,6 @@ const Page = () => {
             />
           </Form.Item>
 
-          {/* ... Terms and conditions ... */}
           <Form.Item>
             <Button
               htmlType="submit"
@@ -208,9 +198,9 @@ const Page = () => {
           Already have an account?{" "}
           <a
             onClick={() => {
-              router.push("/");
+              router.push("/login");
             }}
-            className="rounded-[10px] max-w-[450px] w-full h-[50px] cursor-pointer text-[#b82f2f] text-[18px] font-[500] hover:underline"
+            className="rounded-[10px] max-w-[450px] w-full h-[50px] cursor-pointer text-[#cea141] text-[18px] font-[500] hover:underline"
           >
             Sign in
           </a>

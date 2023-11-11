@@ -48,7 +48,9 @@ const StorageSide = () => {
     <div className="w-[30%] bg-[#ffffff] blur-md invert contrast-125 md:filter-none">
       <div className="flex text-center mt-[40px] ml-[20px]">
         <div className="rounded-full bg-[#2196aa]  w-[50px] h-[50px] text-center flex items-center justify-center ">
-          <b className="font-[600]">S</b>
+          <b className="font-[700]">
+            {user?.email.charAt(`${0}`).toUpperCase()}
+          </b>
         </div>
         <div className="ml-[10px]">
           <h1 className="font-[700] text-[20px] text-left">

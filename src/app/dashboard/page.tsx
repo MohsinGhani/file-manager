@@ -1,7 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Form, Table, message, Input } from "antd";
+import {
+  Table,
+  message,
+  Input,
+  Breadcrumb,
+  Divider,
+  Switch,
+  Cascader,
+} from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import {
   SearchOutlined,
@@ -15,7 +23,47 @@ import { useAuthContext } from "../layout";
 
 import SideBar from "../component/sideBar";
 import StorageSide from "../component/storageSide";
+import { ColorPicker, theme } from "antd";
+interface Option {
+  value: React.Key;
+  label: string;
+  children: object[];
+}
 
+const options: Option[] = [
+  {
+    value: "folder",
+    label: "folder",
+    children: [
+      {
+        value: "images",
+        label: "images",
+        children: [
+          {
+            value: "image",
+            label: "image",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    value: "folders",
+    label: "folders",
+    children: [
+      {
+        value: "multi folders",
+        label: "multi folders",
+        children: [
+          {
+            value: "current folder",
+            label: "current folder",
+          },
+        ],
+      },
+    ],
+  },
+];
 interface DataType {
   key: React.Key;
   name: string;
@@ -23,6 +71,7 @@ interface DataType {
   Modified: string;
   delete: "icons8-nature-100.png";
 }
+
 const columns = [
   {
     title: "Name",
@@ -42,10 +91,17 @@ const columns = [
     title: "Size",
     dataIndex: "Size",
   },
+
   {
+    title: "Action",
     dataIndex: "delete",
-    render: (text: string) => (
-      <span>
+    render: (text: any) => (
+      <span
+        className="cursor-pointer hover:text-red-500"
+        // onClick={() => {
+        //   handleDeleteRow(text?.key);
+        // }}
+      >
         <DeleteOutlined style={{ marginRight: 8 }} />
       </span>
     ),
@@ -89,6 +145,11 @@ const data: DataType[] = [
     delete: "icons8-nature-100.png",
   },
 ];
+
+const getStoredColor = () => {
+  const storedColor = localStorage.getItem("backgroundColor");
+  return storedColor || "#ffffff";
+};
 const Page = () => {
   const { user }: { user: any } = useAuthContext();
 
@@ -96,7 +157,7 @@ const Page = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
-  const [form] = Form.useForm();
+
   const uid = user?.uid;
   const { folderId } = params;
 
@@ -139,27 +200,88 @@ const Page = () => {
     fetchData();
   }, [user, folderId]);
 
+  const [backColor, setBackColor] = useState("");
+  const handleColorChange = (color: any) => {
+    const colorHex = color.toHexString();
+    localStorage.setItem("backgroundColor", colorHex);
+    setBackgroundColor(colorHex);
+    setBackColor(colorHex);
+  };
+  useEffect(() => {
+    const storedColor = getStoredColor();
+    setBackgroundColor(storedColor);
+    setBackColor(storedColor);
+  }, []);
+  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [switchChecked, setSwitchChecked] = useState(true);
+
+  const onChange = (checked: any) => {
+    setSwitchChecked(checked);
+    setBackgroundColor(checked ? "#86B5F4" : "#ffffff");
+  };
+  const checker = (value: any) => {
+    console.log("value :", value);
+  };
+
   return (
     <>
-      <div className="flex bg-[#c4c4c4]">
+      <div className="flex  bg-[#ffffff]">
         <SideBar />
-        <div className="w-[55%] bg-[#e6e6e6] max-w-[1280px] flex flex-col mx-auto items-center gap-[20px] ">
+
+        <Divider className="bg-[#ffffff] h-[1000px]" type="vertical" />
+        <div
+          style={{ backgroundColor, transition: "background-color 3s" }}
+          className="w-[55%] pl-[20px] bg-[#ffffff] max-w-[1280px] flex flex-col mx-auto gap-[20px] "
+        >
+          <div className="flex justify-between w-[95%]">
+            <Breadcrumb
+              className="flex justify-between  mt-5  font-[700]"
+              items={[
+                {
+                  title: "Dashboard",
+                },
+
+                {},
+              ]}
+            />
+
+            <Switch
+              className="mt-[20px]"
+              defaultChecked={switchChecked}
+              onChange={onChange}
+            />
+          </div>
           <Input
-            className="w-[95%] mt-[20px] text-[14px] h-[40px] rounded-[8px]"
+            className="w-[95%] mt-[10px] text-[14px] h-[40px] rounded-[8px]"
             placeholder="Search"
             prefix={<SearchOutlined className="site-form-item-icon" />}
           />
-
-          <div className="bg-[#ffffff] w-[95%] p-[10px] rounded-[8px] ">
-            <div className="flex justify-between mt-[6px] mb-[20px]">
+          <div
+            style={{ backgroundColor, transition: "background-color 3s" }}
+            className="bg-[#ffffff] w-[95%]  rounded-[8px] "
+          >
+            <div className="flex justify-between">
               <h1 className="font-[800] Poppins">Recent Folders</h1>
-              <h1 className="text-[#0e5fcadd] font-sans">view all</h1>
+
+              <Cascader
+                options={options}
+                onChange={checker}
+                placeholder="view all"
+              />
             </div>
-            <div className="flex flex-wrap gap-[10px]">
+            <ColorPicker
+              className=""
+              showText
+              value={backgroundColor}
+              onChangeComplete={handleColorChange}
+            >
+              /
+            </ColorPicker>
+            <div className="flex flex-wrap gap-[10px] ">
               {folderIds?.map((folder: any, index: any) => (
                 <div
                   key={index}
-                  className="shadow-md p-[30px] rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform"
+                  className=" bg-[#fff] shadow-md p-[30px] rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform"
                 >
                   <CloseOutlined
                     onClick={() => {
@@ -181,12 +303,12 @@ const Page = () => {
               ))}
             </div>
           </div>
-          <div className="w-[95%] ">
+          <div className="w-[95%]">
             <h1 className="font-[800] Poppins mb-[20px]">Recent files</h1>
             <Table columns={columns} dataSource={data} />
           </div>
         </div>
-
+        <Divider className="bg-[#ffffff] h-[1000px]" type="vertical" />
         <StorageSide />
       </div>
     </>

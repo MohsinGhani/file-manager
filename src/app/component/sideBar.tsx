@@ -1,8 +1,21 @@
 "use client";
-import { HomeFilled, PlusCircleOutlined } from "@ant-design/icons";
-import { Button, Form, Layout, List, Modal, Upload, message } from "antd";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { v4 } from "uuid";
+import {
+  HomeFilled,
+  PlusCircleOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import {
+  Breadcrumb,
+  Button,
+  Form,
+  Layout,
+  List,
+  Modal,
+  Upload,
+  message,
+} from "antd";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 const { Sider } = Layout;
@@ -14,11 +27,22 @@ import {
   collection,
   doc,
   getDocs,
+  getFirestore,
   query,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db, storage } from "../../../firebase";
 import menu from "./data/menu";
+import { RcFile, UploadFile, UploadProps } from "antd/es/upload";
+
+const getBase64 = (file: RcFile): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
 const SideBar = () => {
   const { user }: { user: any } = useAuthContext();
@@ -29,9 +53,6 @@ const SideBar = () => {
   const [SHOWisModalOpen, setSHOWisModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
-  const [fileList, setFileList] = useState([]);
-  const [fileURL, setFileURL] = useState("");
-  const [img, setIimg] = useState("");
 
   const [form] = Form.useForm();
   const uid = user?.uid;
@@ -74,7 +95,7 @@ const SideBar = () => {
       } else {
         const eventData = {
           foldername: foldername,
-          folderImage: "/images/file_explorer (2).webp",
+          folderImage: "/images/preview.png",
         };
         const colref = collection(db, "folder");
         const docRef = await addDoc(colref, eventData);
@@ -92,7 +113,7 @@ const SideBar = () => {
 
   const eventfileData = {
     fileupload: fileupload,
-    folderImage: "/images/file_explorer (2).webp",
+    folderImage: "/images/preview.png",
   };
 
   useEffect(() => {
@@ -118,85 +139,78 @@ const SideBar = () => {
 
     fetchData();
   }, [user, folderId]);
-  // const handleFileUpload = async (file: any) => {
-  //   try {
-  //     const storage = getStorage();
-  //     const firestore = getFirestore();
+  const handleFileUploads = async (file: any) => {
+    try {
+      const storage = getStorage();
+      const firestore = getFirestore();
 
-  //     const storageRef = ref(storage, `images.jpeg/${file.name}`);
-  //     await uploadBytes(storageRef, file, metadata);
+      const storageRef = ref(storage, `images.jpeg/${file.name}`);
+      await uploadBytes(storageRef, file, metadata);
 
-  //     const downloadURL = await getDownloadURL(storageRef);
+      const downloadURL = await getDownloadURL(storageRef);
 
-  //     const collectionRef = doc(firestore, "fileData", "yourDocumentID");
-  //     const eventData = {
-  //       fileupload: downloadURL,
-  //       folderImage: `images.jpeg/${file.name}`,
-  //     };
-  //     await setDoc(collectionRef, eventData);
+      const collectionRef = doc(firestore, "fileData", "yourDocumentID");
+      const eventData = {
+        fileupload: downloadURL,
+        folderImage: `images.jpeg/${file.name}`,
+      };
+      await setDoc(collectionRef, eventData);
 
-  //     console.log("File uploaded and data added to Firestore.", eventData);
-  //   } catch (error) {
-  //     console.error("Error uploading file or adding data to Firestore:", error);
-  //   }
-  // };
-  // const onFileChange = (info: any) => {
-  //   const { file, fileList } = info;
-  //   console.log("file", file?.uid);
-  //   const updatedFileList = fileList?.map((item: any) => {
-  //     if (item.uid === file.uid) {
-  //       return {
-  //         ...item,
-  //         status: file.status,
-  //         name: file.name,
-  //         url: file.url,
-  //       };
-  //     }
-  //     return item;
-  //   });
-
-  //   setFileList(updatedFileList);
-
-  //   if (file?.status === "done") {
-  //     handleFileUpload(file.originFileObj);
-  //     console.log("file", file);
-  //   }
-  // };
-
-  // const onFileClick = (url: any) => {
-  //   window.open(url, "_blank");
-  // };
-  const handleFileUpload = (e: any) => {
-    if (e.target.files.length > 0) {
-      console.log("Selected file:", e.target.files[0]);
-      const imgsRef = ref(storage, `Imgs/${v4()}`);
-
-      uploadBytes(imgsRef, e.target.files[0]).then((snapshot) => {
-        console.log("Uploaded a blob or file!", snapshot);
-        getDownloadURL(snapshot.ref).then((url) => {
-          console.log("File available at", url);
-          setIimg(url);
-        });
-      });
-    } else {
-      console.log("No file selected");
+      console.log("File uploaded and data added to Firestore.", eventData);
+    } catch (error) {
+      console.error("Error uploading file or adding data to Firestore:", error);
     }
   };
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewTitle, setPreviewTitle] = useState("");
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+
+  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
+
+  const handleCancels = () => setPreviewOpen(false);
+
+  const handlePreview = async (file: UploadFile) => {
+    if (!file.url && !file.preview) {
+      file.preview = await getBase64(file.originFileObj as RcFile);
+    }
+
+    setPreviewImage(file.url || (file.preview as string));
+    setPreviewOpen(true);
+    setPreviewTitle(
+      file.name || file.url!.substring(file.url!.lastIndexOf("/") + 1)
+    );
+  };
+
+  const handleChange: UploadProps["onChange"] = ({ fileList: newFileList }) =>
+    setFileList(newFileList);
+
+  const uploadButton = (
+    <div>
+      <PlusOutlined />
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </div>
+  );
+
+  const handleItemClick = (index: any) => {
+    setSelectedItemIndex(index);
+  };
+
   return (
     <>
-      {" "}
-      '{" "}
       <Layout className="min-h-[100vh] contrast-150 ">
-        <Sider className=" w-[30%] !bg-[#faf9f9] ">
+        <Sider className=" w-[30%] !bg-[#ffffff] ">
           {" "}
-          <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center">
+          <div className="flex mt-[20px] max-xl:flex-col max-xl:items-center cursor-pointer">
             <Image
               src="/images/cloud-data.png"
               width={100}
               height={100}
               alt=""
-              className=""
+              className="cursor-pointer"
             />
+
             <div>
               <h1 className="text-center font-[900] text-[24px] flex items-center text-[#275a94]">
                 cloud{" "}
@@ -218,47 +232,47 @@ const SideBar = () => {
                 open={SHOWisModalOpen}
                 cancelButtonProps={{ style: { display: "none" } }}
                 okButtonProps={{ style: { display: "none" } }}
+                onCancel={handleCancell}
               >
                 <Form
                   form={form}
-                  onFinish={handleFileUpload}
+                  onFinish={handleFileUploads}
                   className="w-full"
                   initialValues={
                     isEditMode ? eventfileData : { fileupload: "" }
                   }
                 >
-                  <Upload action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188">
-                    <Button onChange={(e) => handleFileUpload(e)}>
-                      Upload
-                    </Button>
+                  <Upload
+                    action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
+                    listType="picture-circle"
+                    fileList={fileList}
+                    onPreview={handlePreview}
+                    onChange={handleChange}
+                  >
+                    {fileList.length >= 8 ? null : uploadButton}
                   </Upload>
+                  <Modal
+                    open={previewOpen}
+                    title={previewTitle}
+                    footer={null}
+                    onCancel={handleCancels}
+                  >
+                    <img
+                      alt="example"
+                      style={{ width: "100%" }}
+                      src={previewImage}
+                    />
+                  </Modal>
                   <List
                     dataSource={fileList}
-                    renderItem={(item: any) => (
-                      <List.Item
-                        actions={
-                          [
-                            // <a onClick={() => onFileClick(item.fileURL)}>Open</a>,
-                          ]
-                        }
-                      >
-                        <List.Item.Meta
-                          title={item.name}
-                          description={item.status}
-                        />
-                      </List.Item>
-                    )}
+                    renderItem={(item: any) => <div>images</div>}
                   />
 
                   <div className="flex justify-end gap-2">
                     <Button key="cancelButton" onClick={handleCancell}>
                       Cancel
                     </Button>
-                    <Button
-                      loading={loading}
-                      // onClick={onFileChange}
-                      key="customButton"
-                    >
+                    <Button loading={loading} key="customButton">
                       add
                     </Button>
                   </div>
@@ -322,18 +336,25 @@ const SideBar = () => {
             </div>
 
             <div className="flex gap-6 flex-col">
-              {menu.list.map((item, index) => (
-                <div
-                  onClick={() => {
-                    router.push("/inner-folder");
-                  }}
-                  className="flex gap-4 text-[18px] text-[#707070] cursor-pointer "
-                  key={index}
-                >
-                  {item.logo}
-                  {item.name}
-                </div>
-              ))}
+              {menu.list.map(
+                (item, index) => (
+                  console.log("item", item, index),
+                  (
+                    <div
+                      onClick={() => handleItemClick(index)}
+                      className={`flex gap-4 text-[18px] text-[#707070] cursor-pointer hover:bg-[#1b6bb6] hover:text-[#ffffff] p-[10px] rounded-[10px] ${
+                        selectedItemIndex === index
+                          ? "bg-[#317cd1] text-white"
+                          : ""
+                      }`}
+                      key={index}
+                    >
+                      {item.logo}
+                      {item.name}
+                    </div>
+                  )
+                )
+              )}
             </div>
           </div>
         </Sider>
