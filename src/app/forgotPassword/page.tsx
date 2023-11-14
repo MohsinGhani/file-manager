@@ -30,7 +30,9 @@ const Page = () => {
           content: "Please check your email and reset your password",
           okText: "Close",
           closeIcon: <CloseOutlined />,
-          onOk: () => {},
+          onOk: () => {
+            <div>eghewhwehwe</div>;
+          },
 
           className: "custom-success-modal",
         });

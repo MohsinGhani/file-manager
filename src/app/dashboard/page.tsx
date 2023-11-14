@@ -9,6 +9,7 @@ import {
   Divider,
   Switch,
   Cascader,
+  List,
 } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import {
@@ -20,10 +21,12 @@ import { collection, deleteDoc, doc, getDocs, query } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { useParams, useRouter } from "next/navigation";
 import { useAuthContext } from "../layout";
-
+import { useDrag, useDrop, DndProvider } from "react-dnd";
 import SideBar from "../component/sideBar";
 import StorageSide from "../component/storageSide";
 import { ColorPicker, theme } from "antd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
 interface Option {
   value: React.Key;
   label: string;
@@ -96,12 +99,7 @@ const columns = [
     title: "Action",
     dataIndex: "delete",
     render: (text: any) => (
-      <span
-        className="cursor-pointer hover:text-red-500"
-        // onClick={() => {
-        //   handleDeleteRow(text?.key);
-        // }}
-      >
+      <span className="cursor-pointer hover:text-red-500">
         <DeleteOutlined style={{ marginRight: 8 }} />
       </span>
     ),
@@ -154,6 +152,7 @@ const Page = () => {
   const { user }: { user: any } = useAuthContext();
 
   const [folderIds, setFolderId] = useState<any>(null);
+  const [folder, setFolder] = useState<any>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const params: any = useParams();
@@ -185,7 +184,7 @@ const Page = () => {
 
         querySnapshot.forEach((doc) => {
           const docData = doc.data();
-          0;
+
           folderData.push({ folderId: doc.id, ...docData });
           console.log("folderData :", folderData);
         });
@@ -213,14 +212,69 @@ const Page = () => {
     setBackColor(storedColor);
   }, []);
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [background, setBackground] = useState("#000000");
   const [switchChecked, setSwitchChecked] = useState(true);
 
   const onChange = (checked: any) => {
     setSwitchChecked(checked);
-    setBackgroundColor(checked ? "#86B5F4" : "#ffffff");
+    setBackgroundColor(checked ? "#1c5788" : "#ffffff");
+    setBackground(checked ? "#ffffff" : "#000000");
   };
   const checker = (value: any) => {
     console.log("value :", value);
+  };
+  const DraggableFolder: any = ({
+    folder,
+    index,
+    moveFolder,
+    handleDelete,
+  }) => {
+    const [, ref] = useDrag({
+      type: "FOLDER",
+      item: { index },
+    });
+
+    const [, drop] = useDrop({
+      accept: "FOLDER",
+      hover: (draggedItem: any) => {
+        if (draggedItem.index !== index) {
+          moveFolder(draggedItem.index, index);
+          draggedItem.index = index;
+        }
+      },
+    });
+
+    return (
+      <div
+        ref={(node) => ref(drop(node))}
+        className="bg-[#fff] shadow-md p-[30px] rounded-[8px] text-center cursor-pointer relative transform hover:scale-105 transition-transform"
+      >
+        <CloseOutlined
+          onClick={() => handleDelete(folder)}
+          className="absolute top-0 right-0 p-2 cursor-pointer text-red-600 hover:text-red-700"
+        />
+        <div
+          onClick={() =>
+            router.push(`/dashboard/inner-folder/${folder.folderId}`)
+          }
+        >
+          <Image src={folder?.folderImage} width={100} height={100} alt="" />
+        </div>
+        <h1>{folder?.foldername}</h1>
+      </div>
+    );
+  };
+  const handleDeletes = (folder: any) => {
+    console.log("folder :", folder);
+  };
+
+  const [folders, setFolders] = useState(folderIds);
+
+  const moveFolder = (fromIndex: any, toIndex: any) => {
+    const newFolders = [...folders];
+    const [movedFolder] = newFolders.splice(fromIndex, 1);
+    newFolders.splice(toIndex, 0, movedFolder);
+    setFolders(newFolders);
   };
 
   return (
@@ -235,6 +289,7 @@ const Page = () => {
         >
           <div className="flex justify-between w-[95%]">
             <Breadcrumb
+              style={{ color: background, transition: "color 3s" }}
               className="flex justify-between  mt-5  font-[700]"
               items={[
                 {
@@ -261,7 +316,11 @@ const Page = () => {
             className="bg-[#ffffff] w-[95%]  rounded-[8px] "
           >
             <div className="flex justify-between">
-              <h1 className="font-[800] Poppins">Recent Folders</h1>
+              <h1 className="font-[800] Poppins">
+                <b style={{ color: background, transition: "color 3s" }}>
+                  Recent Folders
+                </b>
+              </h1>
 
               <Cascader
                 options={options}
@@ -304,13 +363,34 @@ const Page = () => {
             </div>
           </div>
           <div className="w-[95%]">
-            <h1 className="font-[800] Poppins mb-[20px]">Recent files</h1>
+            <h1
+              style={{ color: background, transition: "color 3s" }}
+              className="font-[800] Poppins mb-[20px]"
+            >
+              Recent files
+            </h1>
             <Table columns={columns} dataSource={data} />
           </div>
         </div>
         <Divider className="bg-[#ffffff] h-[1000px]" type="vertical" />
         <StorageSide />
       </div>
+      <DndProvider backend={HTML5Backend}>
+        <List
+          className="flex flex-wrap gap-[10px]"
+          dataSource={folders}
+          renderItem={(folder, index) => (
+            <List.Item key={index}>
+              <DraggableFolder
+                folder={folder}
+                index={index}
+                moveFolder={moveFolder}
+                handleDelete={handleDeletes}
+              />
+            </List.Item>
+          )}
+        />
+      </DndProvider>
     </>
   );
 };

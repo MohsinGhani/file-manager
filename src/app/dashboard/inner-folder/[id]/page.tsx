@@ -1,7 +1,7 @@
 "use client";
 import SideBar from "@/app/component/sideBar";
 import StorageSide from "@/app/component/storageSide";
-import { DeleteOutlined, FileOutlined } from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 import { Breadcrumb, Divider, Layout, Table } from "antd";
 import React, { useState } from "react";
 const PagesCom = () => {

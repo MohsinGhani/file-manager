@@ -8,7 +8,7 @@ import {
 
 import { auth, db } from "../../../firebase";
 import { Modal } from "antd";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Button, Form, Input } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
@@ -115,7 +115,7 @@ const Page = () => {
               ]}
             >
               <Input
-                className="font-[500] text-[14px] w-[225px]  max-sm:w-[100%]  rounded-[10px] font-poppins text-[#8591A3] h-[60px] "
+                className="font-[500] text-[14px] w-[225px] max-sm:w-[100%] rounded-[10px] font-poppins text-[#8591A3] h-[60px] "
                 placeholder="Last Name"
                 maxLength={16}
               />
@@ -132,7 +132,7 @@ const Page = () => {
             ]}
           >
             <Input
-              className="font-[500] text-[14px]  rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] "
+              className="font-[500] text-[14px] rounded-[10px] font-poppins text-[#8591A3] h-[60px] mb-[20px] "
               placeholder="Email"
             />
           </Form.Item>
@@ -148,7 +148,6 @@ const Page = () => {
               placeholder="Phone Number"
             />
           </Form.Item>
-
           <Form.Item
             name="password"
             rules={[
@@ -162,7 +161,6 @@ const Page = () => {
               maxLength={16}
             />
           </Form.Item>
-
           <Form.Item
             name="confirmPassword"
             rules={[
@@ -183,7 +181,9 @@ const Page = () => {
               maxLength={16}
             />
           </Form.Item>
-
+          <p className="text-[#ff0000] text-[14px] font-poppins mb-[20px]">
+            {error} &nbsp;{" "}
+          </p>
           <Form.Item>
             <Button
               htmlType="submit"
